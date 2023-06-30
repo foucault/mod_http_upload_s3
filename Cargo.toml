@@ -1,0 +1,22 @@
+[package]
+name = "luas3put"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+aws-config = "0.55"
+aws-sdk-s3 = "0.28"
+aws-types = "0.55"
+tokio = { version = "1", features = ["full"] }
+url = "2.4"
+
+[dependencies.mlua]
+version = "0.8"
+features = ["module", "lua54", "async"]
+
+[dependencies.uuid]
+version = "1"
+features = ["v4", "fast-rng"]
