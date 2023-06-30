@@ -34,8 +34,8 @@ local aws_access_id = assert(module:get_option_string(module.name .. "_access_id
 	module.name .. "_aws_access_id is a required option");
 local aws_secret_key = assert(module:get_option_string(module.name .. "_secret_key"),
 	module.name .. "_aws_secret_key is a required option");
-local aws_base_domain = module:get_option_string(module.name .. "_base_domain",
-	nil);
+local aws_base_domain = assert(module:get_option_string(module.name .. "_base_domain",
+	nil), module.name .. "_base_domain is a required option");
 local aws_endpoint_url = module:get_option_string(module.name .. "_endpoint_url",
 	nil);
 local access = module:get_option_set(module.name .. "_access", {});

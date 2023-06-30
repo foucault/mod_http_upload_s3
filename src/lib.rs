@@ -39,7 +39,7 @@ impl<'lua> ToLua<'lua> for HeadResult {
 struct ClientConfig {
     endpoint_url: Option<String>,
     bucket: String,
-    base_domain: Option<String>,
+    base_domain: String,
     upload_path: String,
     region: String,
     accessid: String,
@@ -48,12 +48,12 @@ struct ClientConfig {
 
 impl ClientConfig {
     fn new(endpoint_url: Option<&str>, id: &str, key: &str, region: &str,
-        bucket: &str, base_domain: Option<&str>, upload_path: &str) -> ClientConfig {
+        bucket: &str, base_domain: &str, upload_path: &str) -> ClientConfig {
 
         ClientConfig {
             endpoint_url: endpoint_url.map(|s| s.to_string()),
             bucket: bucket.to_string(),
-            base_domain: base_domain.map(|s| s.to_string()),
+            base_domain: base_domain.to_string(),
             upload_path: upload_path.to_string(),
             region: region.to_string(),
             accessid: id.to_string(),
@@ -74,10 +74,7 @@ impl<'lua> ToLua<'lua> for ClientConfig {
         let upload_path = Value::String(lua.create_string(&self.upload_path)?);
         let access_id = Value::String(lua.create_string(&self.accessid)?);
         let access_key = Value::String(lua.create_string(&self.accesskey)?);
-        let base_domain = match self.base_domain {
-            Some(domain) => Value::String(lua.create_string(&domain)?),
-            None => Value::Nil
-        };
+        let base_domain = Value::String(lua.create_string(&self.base_domain)?);
 
         let result = lua.create_table()?;
         result.set("endpoint_url", endpoint_url)?;
@@ -101,9 +98,8 @@ impl<'lua> FromLua<'lua> for ClientConfig {
                 let bucket: String = t.get("bucket")?;
                 let region: String = t.get("region")?;
                 let upload_path: String = t.get("upload_path")?;
-                let base_domain: Option<String>  = match t.get("base_domain")? {
-                    Value::String(s) => Some(s.to_str()?.to_string()),
-                    Value::Nil => None,
+                let base_domain: String  = match t.get("base_domain")? {
+                    Value::String(s) => s.to_str()?.to_string(),
                     _ => Err(mlua::Error::FromLuaConversionError {
                             from: "base_domain", to: "Option<String>",
                             message: Some("Domain must be a string or nil".to_string()) })?
@@ -119,7 +115,7 @@ impl<'lua> FromLua<'lua> for ClientConfig {
                 let accessid: String = t.get("access_id")?;
                 let accesskey: String = t.get("access_key")?;
                 Ok(ClientConfig::new(endpoint_url.as_deref(), &accessid, &accesskey,
-                    &region, &bucket, base_domain.as_deref(), &upload_path))
+                    &region, &bucket, &base_domain, &upload_path))
 
             },
             _ => Err(mlua::Error::FromLuaConversionError {
@@ -136,7 +132,7 @@ struct S3Client {
     _rt: Runtime,
     _client: Client,
     bucket: String,
-    base_domain: Option<String>,
+    base_domain: String,
     upload_path: String,
 }
 
@@ -204,13 +200,8 @@ impl S3Client {
 
         let mut raw_get_url = String::new();
         raw_get_url.push_str("https://");
-        match &self.base_domain {
-            Some(d) => {
-                raw_get_url.push_str(&d);
-                raw_get_url.push_str("/");
-            },
-            None => {}
-        }
+        raw_get_url.push_str(&self.base_domain);
+        raw_get_url.push_str("/");
         raw_get_url.push_str(&self.upload_path);
         raw_get_url.push_str("/");
         raw_get_url.push_str(random);

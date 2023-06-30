@@ -71,7 +71,8 @@ Component "upload.xmpp.host" "http_upload_s3"
     http_upload_s3_secret_key = "SECRET";
     -- Optional; will default to S3 if not specified
     http_upload_s3_endpoint_url = "https://endpoint.url";
-    -- Domain to serve files from
+    -- Domain to serve files from, otherwise is the
+    -- public bucket host
     http_upload_s3_base_domain = "download.xmpp.host";
     -- Name of your storage bucket
     http_upload_s3_bucket = "xmppbucket";
