@@ -175,7 +175,7 @@ impl S3Client {
         }
     }
 
-    fn put_presigned(&self, path: &str, filesize: i64) -> Result<Url, String> {
+    fn put_presigned(&self, path: &str, filesize: i64, filetype: &str) -> Result<Url, String> {
         let expires_in = Duration::from_secs(300u64);
         let client = &self._client;
         let target = Path::new(&self.upload_path).join(path);
@@ -186,6 +186,7 @@ impl S3Client {
                 .bucket(&self.bucket)
                 .key(target.to_str().unwrap())
                 .content_length(filesize)
+                .content_type(filetype)
                 .presigned(PresigningConfig::expires_in(expires_in).unwrap())) {
             Ok(req) => { Ok(Url::parse(&req.uri().to_string()).unwrap()) },
             Err(e) => { Err(format!("Could not generate put request: {}", e)) }
@@ -193,7 +194,7 @@ impl S3Client {
         }
     }
 
-    fn create_upload_request(&self, filename: &str, filesize: i64) -> (Option<String>, Option<String>) {
+    fn create_upload_request(&self, filename: &str, filesize: i64, filetype: &str) -> (Option<String>, Option<String>) {
 
         let mut uuidbuffer = Uuid::encode_buffer();
         let random = Uuid::new_v4().as_hyphenated().encode_lower(&mut uuidbuffer);
@@ -211,7 +212,8 @@ impl S3Client {
         let get_url = Url::parse(&raw_get_url).unwrap();
 
         let put_url_url: Option<Url> = self.put_presigned(
-            Path::new(random).join(filename).as_path().to_str().unwrap(), filesize)
+                Path::new(random).join(filename).as_path().to_str().unwrap(),
+                filesize, filetype)
             .ok();
 
         let put_url = match put_url_url {
@@ -243,12 +245,12 @@ impl S3Client {
     }
 }
 
-fn create_upload_request(_: &Lua, (filename, filesize, config): (String, i64, ClientConfig))
+fn create_upload_request(_: &Lua, (filename, filesize, filetype, config): (String, i64, String, ClientConfig))
     -> LuaResult<(Option<String>, Option<String>)> {
 
     let client = S3Client::from_client_config(config);
     match client {
-        Ok(c) => Ok(c.create_upload_request(&filename, filesize)),
+        Ok(c) => Ok(c.create_upload_request(&filename, filesize, &filetype)),
         Err(_) => Err(mlua::Error::RuntimeError("Could not create upload request".to_string()))
     }
 }

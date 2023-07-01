@@ -107,7 +107,7 @@ local function handle_request(uploader, origin, stanza, xmlns, filename, filesiz
 		return nil, nil;
 	end
 
-	local get_url, put_url = luas3put.create_upload_request(filename, filesize, s3_config)
+	local get_url, put_url = luas3put.create_upload_request(filename, filesize, filetype, s3_config)
 
 	if not get_url or not put_url then
 		module:log("debug", "PUT or GET urls not generated properly")
